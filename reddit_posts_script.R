@@ -36,6 +36,7 @@ library(tidytext)
 library(topicmodels)
 library(SnowballC)
 library(ldatuning)
+library(tm)
 
 posts = read_csv("reddit_covidlonghaulers_SepOct2021.csv")
 posts = filter(posts, selftext != "[removed]") # exclude deleted posts
@@ -55,6 +56,14 @@ text = text %>%
 textdtm = text %>%
   count(id, stemmed) %>%
   cast_dtm(document = id, term = stemmed, value = n)
+
+
+# Find most common words -> keep deleting too common ones...
+findFreqTerms(textdtm, lowfreq=50)
+
+
+
+
 
 #### Topic model ####
 
