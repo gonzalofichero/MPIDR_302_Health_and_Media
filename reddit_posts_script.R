@@ -35,6 +35,7 @@ library(lubridate)
 library(tidytext)
 library(topicmodels)
 library(SnowballC)
+library(ldatuning)
 
 posts = read_csv("reddit_covidlonghaulers_SepOct2021.csv")
 posts = filter(posts, selftext != "[removed]") # exclude deleted posts
@@ -56,6 +57,21 @@ textdtm = text %>%
   cast_dtm(document = id, term = stemmed, value = n)
 
 #### Topic model ####
+
+# Optimum of K in topicmodeling
+optim_k <- FindTopicsNumber(
+  textdtm,
+  topics = seq(from = 2, to = 30, by = 1),
+  metrics = c("Griffiths2004", "CaoJuan2009", "Arun2010", "Deveaud2014"),
+  method = "Gibbs",
+  control = list(seed = 77),
+  mc.cores = 2L,
+  verbose = TRUE
+)
+
+FindTopicsNumber_plot(optim_k)
+# Seem to be between 10 & 14 the best number of topics
+
 
 # number of topics
 k = 7
