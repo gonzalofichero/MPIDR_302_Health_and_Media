@@ -61,6 +61,20 @@ textdtm = text %>%
 # Find most common words -> keep deleting too common ones...
 findFreqTerms(textdtm, lowfreq=50)
 
+# And now goes into a matrix
+# colSums IF DocumentTermMatrix; rowSums IF TermDocumentMatrix !
+term.freq <- sort(colSums(as.matrix(textdtm)),decreasing=TRUE)
+
+
+# data.framing the previous objects
+red_word_freqs <- data.frame(word = names(term.freq), freq=term.freq)
+
+
+# Plotting frequencies to find cutting point
+ggplot(subset(red_word_freqs, freq>50), aes(x = reorder(word, -freq), y = freq)) +
+  geom_bar(stat = "identity") + 
+  ylab("Palabras con frecuencia mayor a 50 en los posts") + xlab("") +
+  theme(axis.text.x=element_text(angle=45, hjust=1))
 
 
 
