@@ -44,6 +44,15 @@ posts$created_utc = as_datetime(posts$created_utc)
 
 text = unnest_tokens(posts, word, selftext)
 # make everything lowercase, remove stopwords, and create a stemmed version:
+
+# Words to eliminate due to exploratory analysis
+my_stop_words <- tibble(
+  word = c("like", "get", "go", "month",
+           "dai", "anyon", "got", "just", "also", "week"),
+  lexicon = "own"
+)
+
+
 text = text %>%
   mutate(word = tolower(word),
          # replace formatted apostrophes (right single quotation mark) 
@@ -51,7 +60,11 @@ text = text %>%
          word = str_replace_all(word, "\u2019", "'")) %>%
   anti_join(filter(stop_words, lexicon == "snowball"), by = "word") %>%
   mutate(stemmed = wordStem(word)) %>%
+  anti_join(filter(my_stop_words, lexicon == "own"), by = c("stemmed" = "word")) %>%
   anti_join(filter(stop_words, lexicon == "snowball"), by = c("stemmed" = "word")) # exclude again after the corrections
+
+
+
 # create a document-term matrix:
 textdtm = text %>%
   count(id, stemmed) %>%
@@ -77,6 +90,38 @@ ggplot(subset(red_word_freqs, freq>50), aes(x = reorder(word, -freq), y = freq))
   theme(axis.text.x=element_text(angle=45, hjust=1))
 
 
+#####################
+# Some other exploratory plots
+
+# Cloud of Words :)
+library(RColorBrewer)
+library(wordcloud)
+
+dark2 <- brewer.pal(6,"Dark2")
+
+dev.new(width = 1600, height = 1600, unit = "px")
+wordcloud(red_word_freqs$word, red_word_freqs$freq,
+          # With random False then most important words in the centre
+          random.order = F,
+          rot.per = 0.2,
+          scale=c(5,.2),
+          min.freq=25,
+          max.words = 400,
+          colors = dark2)
+
+
+# Or a pretty plot
+library(qdap)
+
+associations <- findAssocs(textdtm, "symptom", 0.54)
+
+associations_df <- list_vect2df(associations)[, 2:3]
+
+ggplot(associations_df, aes(y = associations_df[, 1])) + 
+  geom_point(aes(x = associations_df[, 2]), 
+             data = associations_df, size = 3) + 
+  ggtitle("Word Associations to 'symptom'")
+
 
 
 #### Topic model ####
@@ -97,7 +142,7 @@ FindTopicsNumber_plot(optim_k)
 
 
 # number of topics
-k = 7
+k = 4
 # number of top words considered
 top = 15
 
